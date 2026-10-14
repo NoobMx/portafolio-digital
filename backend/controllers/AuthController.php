@@ -8,7 +8,8 @@ class AuthController {
 
     public function __construct() {
         $database = new DataBase();
-        $this->db = $database->connect();
+        #$this->db = $database->connect();
+        $this->db = $database->getConnection();
         $this->user = new Usuario($this->db);
     }
 
