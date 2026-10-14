@@ -1,8 +1,6 @@
 <?php
 header('Content-Type: application/json');
-// ¡Aquí está el cambio principal!
 header("Access-Control-Allow-Origin: *"); 
-// Ampliamos los métodos y headers permitidos por si acaso
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
