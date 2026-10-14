@@ -63,7 +63,10 @@ export default {
             error: false,
             msgError: '',
             // Apuntamos a la raíz de tu servidor PHP
-            basePath: 'http://localhost:9000/'
+            //basePath: 'http://localhost:9000/'
+            basePath: window.location.hostname === 'localhost' 
+                ? 'http://localhost:9000/' 
+                : 'https://portafolio-digital-production.up.railway.app/'
         };
     },
     methods: {

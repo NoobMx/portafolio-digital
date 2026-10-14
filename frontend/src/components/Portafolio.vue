@@ -211,7 +211,10 @@ export default {
     data() {
         return {
             listaProyectos: [],
-            basePath: 'http://localhost:9000/',
+            //basePath: 'http://localhost:9000/',
+            basePath: window.location.hostname === 'localhost' 
+                ? 'http://localhost:9000/' 
+                : 'https://portafolio-digital-production.up.railway.app/',
             urlCV: '#',
             nombreCompleto: 'Cargando...',
             listaExperiencia: [],

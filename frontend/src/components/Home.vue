@@ -439,8 +439,10 @@
                 listaProyectos: [],
                 error: false,
                 msgError: '',
-                basePath: 'http://localhost:9000/',
-                
+                //basePath: 'http://localhost:9000/',
+                basePath: window.location.hostname === 'localhost' 
+                    ? 'http://localhost:9000/' 
+                    : 'https://portafolio-digital-production.up.railway.app/',
                 // Proyectos
                 modalAbierto: false,
                 editando: false,
