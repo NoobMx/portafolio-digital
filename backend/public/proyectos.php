@@ -13,7 +13,8 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../models/Proyecto.php';
 
 $database = new DataBase();
-$db = $database->connect();
+#$db = $database->connect();
+$db = $database->getConnection();
 $proyecto = new Proyecto($db);
 
 $method = $_SERVER['REQUEST_METHOD'];

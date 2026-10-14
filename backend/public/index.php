@@ -5,7 +5,8 @@ header("Content-Type: application/json");
 require_once __DIR__ . '/../config/conexion.php';
 
 $db = new DataBase();
-$conexion = $db->connect();
+#$conexion = $db->connect();
+$conexion = $database->getConnection();
 
 if ($conexion) {
     echo json_encode([

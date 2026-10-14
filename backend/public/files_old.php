@@ -13,7 +13,8 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../models/File.php';
 
 $database = new DataBase();
-$db = $database->connect();
+#$db = $database->connect();
+$db = $database->getConnection();
 $fileModel = new File($db);
 
 $method = $_SERVER['REQUEST_METHOD'];

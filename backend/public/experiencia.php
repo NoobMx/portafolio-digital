@@ -13,7 +13,8 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../models/Experiencia.php';
 
 $database = new DataBase();
-$db = $database->connect();
+#$db = $database->connect();
+$db = $database->getConnection();
 $experiencia = new Experiencia($db);
 
 $method = $_SERVER['REQUEST_METHOD'];
