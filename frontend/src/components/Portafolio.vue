@@ -22,7 +22,7 @@
                         </p>
                         <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                             <a href="#proyectos" class="btn btn-primary btn-lg px-4 me-md-2">Ver Proyectos</a>
-                            <!-- <button class="btn btn-outline-secondary btn-lg px-4">Descargar CV</button> -->
+                            <!-- Botón dinámico del CV usando la tabla files -->
                             <a :href="urlCV" target="_blank" class="btn btn-outline-secondary btn-lg px-4">Ver / Descargar CV</a>
                         </div>
                     </div>
@@ -90,6 +90,7 @@
                         <div class="row justify-content-center">
                             <div class="col-lg-8">
                                 <div class="timeline">
+                                    <!-- Aquí está tu Experiencia y Educación intacta -->
                                     <div class="timeline-item" v-for="item in listaExperiencia" :key="item.id_experiencia">
                                         <div class="timeline-icon" :class="item.tipo === 'experiencia' ? 'bg-primary' : 'bg-success'">
                                             <i class="bi" :class="item.tipo === 'experiencia' ? 'bi-briefcase-fill' : 'bi-mortarboard-fill'"></i>
@@ -143,6 +144,62 @@
                 </div>
             </div>
         </div>
+
+        <!-- NUEVA SECCIÓN: CERTIFICACIONES Y CATÁLOGO -->
+        <div id="certificaciones" class="container mb-5 pt-4">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="border-bottom pb-2">Certificaciones y Credenciales</h2>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div 
+                    v-for="cert in listaCertificaciones" 
+                    :key="cert.id_file" 
+                    class="col-12 col-md-6 col-lg-4"
+                >
+                    <div class="card h-100 shadow-sm border-0 card-certificacion">
+                        <!-- Vista previa de la miniatura -->
+                        <div class="position-relative overflow-hidden bg-light rounded-top" style="height: 200px;">
+                            <img 
+                                :src="cert.url_miniatura || 'https://placehold.co/600x400/212529/0d6efd?text=Certificado'" 
+                                :alt="cert.nombre" 
+                                class="w-100 h-100 object-fit-cover"
+                            >
+                            <span class="badge position-absolute top-0 end-0 m-2 shadow-sm" :class="cert.formato === 'pdf' ? 'bg-danger' : 'bg-primary'">
+                                {{ cert.formato ? cert.formato.toUpperCase() : 'PDF' }}
+                            </span>
+                        </div>
+
+                        <!-- Información de la certificación -->
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold text-dark h6 mb-1">{{ cert.nombre }}</h5>
+                            <p class="text-muted small mb-3">
+                                <i class="bi bi-building me-1"></i> {{ cert.emisor }} <br>
+                                <i class="bi bi-calendar3 me-1"></i> {{ cert.fecha_emision ? formatearFecha(cert.fecha_emision) : 'Sin fecha' }}
+                            </p>
+                            
+                            <div class="mt-auto pt-2 border-top">
+                                <a 
+                                    :href="cert.url" 
+                                    target="_blank" 
+                                    class="btn btn-outline-primary btn-sm w-100"
+                                >
+                                    <i class="bi bi-eye-fill me-1"></i> Ver Documento
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Mensaje si no hay certificaciones aún -->
+                <div v-if="listaCertificaciones.length === 0" class="col-12 text-center text-muted py-4">
+                    <i class="bi bi-patch-exclamation display-4 mb-2 d-block opacity-50"></i>
+                    Aún no hay certificaciones registradas.
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -157,18 +214,19 @@ export default {
             basePath: 'http://localhost:9000/',
             urlCV: '#',
             nombreCompleto: 'Cargando...',
-            listaExperiencia: []
+            listaExperiencia: [],
+            listaCertificaciones: [] // Nueva lista para el catálogo
         }
     },
     mounted() {
         this.cargarProyectos();
         this.cargarCV();
         this.cargarExperiencia();
+        this.cargarCertificaciones(); // Nueva llamada
     },
     methods: {
         async cargarProyectos() {
             try {
-                debugger;
                 const response = await axios.get(this.basePath + 'proyectos.php');
                 if (response.data.success) {
                     this.listaProyectos = response.data.data;
@@ -180,12 +238,13 @@ export default {
 
         async cargarCV() {
             try {
-                const response = await axios.get(this.basePath + 'files.php?tipo=cv');
+                // Adaptado al nuevo formato estandarizado
+                const response = await axios.get(this.basePath + 'files.php?categoria=cv&single=true');
                 if (response.data.success && response.data.data) {
                     this.urlCV = response.data.data.url;
                 }
             } catch (error) {
-                console.error('Error al cargar el CV desde la tabla files:', error);
+                console.error('Error al cargar el CV:', error);
             }
         },
 
@@ -200,11 +259,22 @@ export default {
             }
         },
 
-        // Método para poner las fechas bonitas (ej: "2024-04-01" -> "Abr 2024")
+        async cargarCertificaciones() {
+            try {
+                // Obtenemos solo los archivos de categoría 'certificacion'
+                const response = await axios.get(this.basePath + 'files.php?categoria=certificacion');
+                if (response.data.success) {
+                    this.listaCertificaciones = response.data.data;
+                }
+            } catch (error) {
+                console.error('Error al cargar certificaciones:', error);
+            }
+        },
+
         formatearFecha(fechaSql) {
             if (!fechaSql) return '';
             const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const partes = fechaSql.split('-'); // [0] Año, [1] Mes, [2] Día
+            const partes = fechaSql.split('-'); 
             const mesIndex = parseInt(partes[1]) - 1;
             return `${meses[mesIndex]} ${partes[0]}`;
         }
@@ -213,45 +283,59 @@ export default {
 </script>
 
 <style scoped>
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-.timeline::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 15px;
-    height: 100%;
-    width: 2px;
-    background-color: #dee2e6;
-}
-.timeline-item {
-    position: relative;
-    margin-bottom: 2.5rem;
-}
-.timeline-icon {
-    position: absolute;
-    left: -40px;
-    top: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 0 4px #f8f9fa;
-    z-index: 1;
-}
-.timeline-content {
-    background: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    border: 1px solid #f1f3f5;
-    transition: transform 0.2s ease;
-}
-.timeline-content:hover {
-    transform: translateX(5px);
-}
+  /* Estilos originales de la línea del tiempo */
+  .timeline {
+      position: relative;
+      padding-left: 30px;
+  }
+  .timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 15px;
+      height: 100%;
+      width: 2px;
+      background-color: #dee2e6;
+  }
+  .timeline-item {
+      position: relative;
+      margin-bottom: 2.5rem;
+  }
+  .timeline-icon {
+      position: absolute;
+      left: -40px;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 4px #f8f9fa;
+      z-index: 1;
+  }
+  .timeline-content {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      border: 1px solid #f1f3f5;
+      transition: transform 0.2s ease;
+  }
+  .timeline-content:hover {
+      transform: translateX(5px);
+  }
+
+  /* Nuevos estilos para las tarjetas del catálogo */
+  .card-certificacion {
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      border-radius: 12px;
+  }
+  .card-certificacion:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+  }
+  .object-fit-cover {
+      object-fit: cover;
+  }
 </style>

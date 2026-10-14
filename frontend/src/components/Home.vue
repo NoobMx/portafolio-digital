@@ -28,9 +28,18 @@
                                 <i class="bi bi-briefcase-fill me-1"></i> Experiencia y Educación
                             </button>
                         </li>
+                        <li class="nav-item">
+                            <button 
+                                class="nav-link btn btn-link fw-semibold px-3 border-0" 
+                                :class="{ 'active text-primary fw-bold': vistaActiva === 'archivos' }"
+                                @click="vistaActiva = 'archivos'"
+                            >
+                                <i class="bi bi-file-earmark-code-fill me-1"></i> Archivos y Certificaciones
+                            </button>
+                        </li>
                     </ul>
                     
-                    <button class="btn btn-outline-danger btn-sm" @click="cerrarSesion()">
+                    <button class="btn btn-outline-danger btn-sm" @click="logout()">
                         <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
                     </button>
                 </div>
@@ -38,8 +47,8 @@
         </nav>
         
         <div class="container mt-4 pt-2">
+            <!-- PESTAÑA 1: PROYECTOS -->
             <div v-if="vistaActiva === 'proyectos'" class="animate__animated animate__fadeIn">
-                <!-- PROYECTOS CONTENT -->
                 <div class="container mt-5 pt-2">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div>
@@ -64,33 +73,39 @@
                                         <th scope="col" style="width: 80px;">ID</th>
                                         <th scope="col" style="width: 300px;">Título del Proyecto</th>
                                         <th scope="col">Tecnologías</th>
-                                        <th scope="col" class="text-end" style="width: 200px;">Acciones</th>
+                                        <th scope="col" class="text-end" style="width: 150px;">Acciones</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
                                     <tr v-for="proyecto in listaProyectos" :key="proyecto.id_proyecto">
                                         <td class="text-muted font-monospace small">#{{ proyecto.id_proyecto }}</td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ proyecto.titulo }}</div>
-                                        </td>
+                                        <td><div class="fw-semibold text-dark">{{ proyecto.titulo }}</div></td>
                                         <td>
                                             <div class="d-flex flex-wrap gap-1">
                                                 <span 
                                                     v-for="(tech, index) in proyecto.tecnologias.split(',')" 
                                                     :key="index" 
-                                                    class="badge custom-badge"
+                                                    class="badge"
+                                                    :class="[
+                                                        'bg-primary bg-opacity-10 text-primary border border-primary',
+                                                        'bg-success bg-opacity-10 text-success border border-success',
+                                                        'bg-info bg-opacity-10 text-info border border-info',
+                                                        'bg-danger bg-opacity-10 text-danger border border-danger',
+                                                        'bg-warning bg-opacity-10 text-dark border border-warning',
+                                                        'bg-dark bg-opacity-10 text-dark border border-dark'
+                                                    ][index % 6]"
                                                 >
                                                     {{ tech.trim() }}
                                                 </span>
                                             </div>
                                         </td>
                                         <td class="text-end">
-                                            <button class="btn btn-action-edit btn-sm me-2 fw-medium" @click="abrirModalEditar(proyecto)">
-                                                Editar
+                                            <!-- Botones solo con iconos -->
+                                            <button class="btn btn-action-edit btn-sm me-2 fw-medium" @click="abrirModalEditar(proyecto)" title="Editar">
+                                                <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-action-delete btn-sm fw-medium" @click="eliminarProyecto(proyecto.id_proyecto)">
-                                                Eliminar
+                                            <button class="btn btn-action-delete btn-sm fw-medium" @click="eliminarProyecto(proyecto.id_proyecto)" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -107,8 +122,8 @@
                 </div>
             </div>
             
+            <!-- PESTAÑA 2: EXPERIENCIA -->
             <div v-if="vistaActiva === 'experiencia'" class="animate__animated animate__fadeIn">
-                <!-- EXPERIENCIA CONTENT -->
                 <div class="mt-5">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3 class="fw-bold"><i class="bi bi-briefcase"></i> Gestionar Experiencia y Educación</h3>
@@ -117,41 +132,115 @@
                         </button>
                     </div>
                     
-                    <div class="table-responsive shadow-sm rounded">
-                        <table class="table table-striped table-hover align-middle mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Orden</th>
-                                    <th>Tipo</th>
-                                    <th>Título</th>
-                                    <th>Empresa / Institución</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="exp in listaExperiencia" :key="exp.id_experiencia">
-                                    <td><span class="badge text-bg-secondary">{{ exp.orden }}</span></td>
-                                    <td>
-                                        <span class="badge" :class="exp.tipo === 'experiencia' ? 'text-bg-primary' : 'text-bg-success'">
-                                            {{ exp.tipo.toUpperCase() }}
-                                        </span>
-                                    </td>
-                                    <td class="fw-bold">{{ exp.titulo }}</td>
-                                    <td>{{ exp.institucion_empresa }}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-warning me-2" @click="editarExperiencia(exp)">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" @click="eliminarExperiencia(exp.id_experiencia)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="listaExperiencia.length === 0">
-                                    <td colspan="5" class="text-center py-4 text-muted">No hay registros de experiencia.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="custom-table-container shadow-sm border-0 mb-5">
+                        <div class="table-responsive">
+                            <table class="table custom-table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 80px;">Orden</th>
+                                        <th scope="col" style="width: 150px;">Tipo</th>
+                                        <th scope="col">Título (Puesto o Carrera)</th>
+                                        <th scope="col">Institución / Empresa</th>
+                                        <th scope="col" class="text-end" style="width: 200px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="exp in listaExperiencia" :key="exp.id_experiencia">
+                                        <td class="text-muted font-monospace small">#{{ exp.orden }}</td>
+                                        <td>
+                                            <span class="badge" 
+                                                  :class="exp.tipo === 'experiencia' ? 'bg-primary bg-opacity-10 text-primary border border-primary' : 'bg-success bg-opacity-10 text-success border border-success'">
+                                                {{ exp.tipo.toUpperCase() }}
+                                            </span>
+                                        </td>
+                                        <td><div class="fw-semibold text-dark">{{ exp.titulo }}</div></td>
+                                        <td><span class="text-muted small"><i class="bi bi-building me-1"></i> {{ exp.institucion_empresa }}</span></td>
+                                        <td class="text-end">
+                                            <button class="btn btn-action-edit btn-sm me-2 fw-medium" @click="editarExperiencia(exp)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-action-delete btn-sm fw-medium" @click="eliminarExperiencia(exp.id_experiencia)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="listaExperiencia.length === 0">
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            <i class="bi bi-briefcase display-6 d-block mb-2 text-secondary opacity-50"></i>
+                                            No hay registros de experiencia.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: ARCHIVOS Y CERTIFICACIONES -->
+            <div v-if="vistaActiva === 'archivos'" class="animate__animated animate__fadeIn">
+                <div class="mt-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h3 class="fw-bold mb-1"><i class="bi bi-file-earmark-pdf"></i> Archivos y Certificaciones</h3>
+                            <p class="text-muted small mb-0">Gestiona tu CV y tus diplomas para el catálogo digital.</p>
+                        </div>
+                        <button class="btn btn-success" @click="abrirModalArchivo()">
+                            <i class="bi bi-plus-circle me-1"></i> Agregar Archivo
+                        </button>
+                    </div>
+
+                    <div class="custom-table-container shadow-sm border-0 mb-5">
+                        <div class="table-responsive">
+                            <table class="table custom-table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 80px;">ID</th>
+                                        <th scope="col">Nombre del Documento</th>
+                                        <th scope="col" style="width: 140px;">Categoría</th>
+                                        <th scope="col" style="width: 120px;">Formato</th>
+                                        <th scope="col">Emisor</th>
+                                        <th scope="col" class="text-end" style="width: 210px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="file in listaArchivos" :key="file.id_file">
+                                        <td class="text-muted font-monospace small">#{{ file.id_file }}</td>
+                                        <td><div class="fw-semibold text-dark">{{ file.nombre }}</div></td>
+                                        <td>
+                                            <span class="badge" 
+                                                  :class="file.categoria === 'cv' ? 'bg-info bg-opacity-10 text-info border border-info' : 'bg-primary bg-opacity-10 text-primary border border-primary'">
+                                                {{ file.categoria.toUpperCase() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge custom-badge">
+                                                <i class="bi" :class="file.formato === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-image text-success'"></i>
+                                                {{ file.formato ? file.formato.toUpperCase() : 'PDF' }}
+                                            </span>
+                                        </td>
+                                        <td><span class="text-muted small">{{ file.emisor || 'N/A' }}</span></td>
+                                        <td class="text-end">
+                                            <a :href="file.url" target="_blank" class="btn btn-action-view btn-sm me-2 fw-medium" title="Ver Documento">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <button class="btn btn-action-edit btn-sm me-2 fw-medium" @click="editarArchivo(file)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-action-delete btn-sm fw-medium" @click="eliminarArchivo(file.id_file)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="listaArchivos.length === 0">
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <i class="bi bi-file-earmark-x display-6 d-block mb-2 text-secondary opacity-50"></i>
+                                            No hay archivos ni certificaciones registradas.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -264,7 +353,75 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- ARCHIVOS Y CERTIFICACIONES MODAL -->
+        <div class="modal fade" id="modalArchivo" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header text-bg-success">
+                        <h5 class="modal-title">{{ editandoArchivo ? 'Editar Archivo' : 'Nuevo Archivo / Certificación' }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form @submit.prevent="guardarArchivo">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Categoría</label>
+                                    <select class="form-select" v-model="formArchivo.categoria" required>
+                                        <option value="certificacion">Certificación</option>
+                                        <option value="cv">Curriculum Vitae (CV)</option>
+                                        <option value="reconocimiento">Reconocimiento</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Formato</label>
+                                    <select class="form-select" v-model="formArchivo.formato" required>
+                                        <option value="pdf">PDF</option>
+                                        <option value="png">PNG</option>
+                                        <option value="jpg">JPG</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nombre del Documento / Certificación</label>
+                                <input type="text" class="form-control" v-model="formArchivo.nombre" required placeholder="Ej: Certificado PHP 8 Moderno">
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Entidad Emisora</label>
+                                    <input type="text" class="form-control" v-model="formArchivo.emisor" placeholder="Ej: Udemy, Cambridge, UPT">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Fecha de Emisión</label>
+                                    <input type="date" class="form-control" v-model="formArchivo.fecha_emision">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">URL del Documento Original (Drive / Servidor)</label>
+                                <input type="url" class="form-control" v-model="formArchivo.url" required placeholder="https://drive.google.com/file/d/.../view">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">URL de la Imagen en Miniatura (Opcional)</label>
+                                <input type="url" class="form-control" v-model="formArchivo.url_miniatura" placeholder="https://ejemplo.com/miniatura.jpg">
+                                <div class="form-text">Si la dejas vacía, usará una miniatura genérica.</div>
+                            </div>
+
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-save"></i> Guardar Archivo
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -272,6 +429,7 @@
     import axios from 'axios';
     import Swal from 'sweetalert2';
     import * as bootstrap from 'bootstrap';
+
     export default {
         name: 'AppHome',
         data() {
@@ -282,7 +440,8 @@
                 error: false,
                 msgError: '',
                 basePath: 'http://localhost:9000/',
-                //Proyectos
+                
+                // Proyectos
                 modalAbierto: false,
                 editando: false,
                 form: {
@@ -293,7 +452,8 @@
                     url_github: '',
                     descripcion: ''
                 },
-                //Experiencia
+                
+                // Experiencia
                 listaExperiencia: [],
                 formExperiencia: {
                     id_experiencia: null,
@@ -307,22 +467,39 @@
                     orden: 1
                 },
                 editandoExperiencia: false,
-                modalExperienciaInstancia: null
+                modalExperienciaInstancia: null,
+
+                // Archivos
+                listaArchivos: [],
+                formArchivo: {
+                    id_file: null,
+                    nombre: '',
+                    categoria: 'certificacion',
+                    formato: 'pdf',
+                    emisor: '',
+                    fecha_emision: '',
+                    url: '',
+                    url_miniatura: ''
+                },
+                editandoArchivo: false,
+                modalArchivoInstancia: null
             }
         },
         mounted() {
-            // Cuando el componente carga, leemos el nombre del localStorage
             const usuarioString = localStorage.getItem('usuario');
             if (usuarioString) {
                 const usuario = JSON.parse(usuarioString);
-                this.nombreUsuario = usuario.name; // Tomamos el 'name_complete' que mandó PHP
+                this.nombreUsuario = usuario.name;
             }
             this.cargarProyectos();
-
             this.cargarExperiencia();
+            this.cargarArchivos();
+
             this.modalExperienciaInstancia = new bootstrap.Modal(document.getElementById('modalExperiencia'));
+            this.modalArchivoInstancia = new bootstrap.Modal(document.getElementById('modalArchivo'));
         },
         methods: {
+            // PROYECTOS
             async cargarProyectos() {
                 try {
                     const response = await axios.get(this.basePath + 'proyectos.php');
@@ -350,21 +527,16 @@
             },
             async guardarProyecto() {
                 try {
-                    debugger;
                     let response;
                     if (this.editando) {
-                        // Si estamos editando mandamos petición por PUT
                         response = await axios.put(this.basePath + 'proyectos.php', this.form);
                     } else {
-                        // Si es nuevo mandamos petición por POST
                         response = await axios.post(this.basePath + 'proyectos.php', this.form);
                     }
 
                     if (response.data.success) {
                         this.cerrarModal();
                         this.cargarProyectos();
-                        
-                        // Alerta refinada con SweetAlert2
                         Swal.fire({
                             icon: 'success',
                             title: '¡Operación Exitosa!',
@@ -380,10 +552,9 @@
                 }
             },
             async eliminarProyecto(id) {
-                // Ventana de confirmación nativa de SweetAlert2
                 Swal.fire({
                     title: '¿Estás completamente seguro?',
-                    text: "Esta acción eliminará permanentemente el proyecto de la base de datos.",
+                    text: "Esta acción eliminará permanentemente el proyecto.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#212529',
@@ -406,11 +577,13 @@
                     }
                 });
             },
+
+            // EXPERIENCIA
             async cargarExperiencia() {
                 try {
                     const response = await axios.get(this.basePath + 'experiencia.php');
                     if (response.data.success) {
-                    this.listaExperiencia = response.data.data;
+                        this.listaExperiencia = response.data.data;
                     }
                 } catch (error) {
                     console.error('Error al cargar la experiencia:', error);
@@ -427,36 +600,28 @@
                     fecha_fin: '',
                     descripcion: '',
                     actual: false,
-                    orden: this.listaExperiencia.length + 1 // Sugerir el siguiente número
+                    orden: this.listaExperiencia.length + 1
                 };
                 this.modalExperienciaInstancia.show();
             },
             editarExperiencia(exp) {
                 this.editandoExperiencia = true;
-                // Clonamos el objeto para no editar directamente la tabla hasta guardar
                 this.formExperiencia = { ...exp }; 
-                // Convertir el valor "actual" de la BD (puede venir como 't'/'f', 1/0, o boolean) a booleano real
                 this.formExperiencia.actual = (exp.actual === true || exp.actual === 't' || exp.actual == 1);
-                
                 this.modalExperienciaInstancia.show();
             },
             async guardarExperiencia() {
                 try {
-                    // Formateamos los datos antes de enviarlos
-                    
                     const datosAEnviar = { ...this.formExperiencia };
-                    // Si es "actual", limpiamos la fecha de fin para evitar errores en la BD
                     if (datosAEnviar.actual) {
                         datosAEnviar.fecha_fin = null; 
                     }
 
                     let response;
                     if (this.editandoExperiencia) {
-                        // Si estamos editando, simulamos un PUT enviando el _method
                         datosAEnviar._method = 'PUT';
                         response = await axios.post(this.basePath + 'experiencia.php', datosAEnviar);
                     } else {
-                    // Si es nuevo, hacemos un POST normal
                         response = await axios.post(this.basePath + 'experiencia.php', datosAEnviar);
                     }
 
@@ -486,7 +651,6 @@
 
                 if (confirmacion.isConfirmed) {
                     try {
-                        // Enviamos la petición DELETE simulada mediante POST
                         const response = await axios.post(this.basePath + 'experiencia.php', {
                             _method: 'DELETE',
                             id_experiencia: id
@@ -504,6 +668,87 @@
                     }
                 }
             },
+
+            // ARCHIVOS Y CERTIFICACIONES
+            async cargarArchivos() {
+                try {
+                    const response = await axios.get(this.basePath + 'files.php');
+                    if (response.data.success) {
+                        this.listaArchivos = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error al cargar archivos:', error);
+                }
+            },
+            abrirModalArchivo() {
+                this.editandoArchivo = false;
+                this.formArchivo = {
+                    id_file: null,
+                    nombre: '',
+                    categoria: 'certificacion',
+                    formato: 'pdf',
+                    emisor: '',
+                    fecha_emision: '',
+                    url: '',
+                    url_miniatura: ''
+                };
+                this.modalArchivoInstancia.show();
+            },
+            editarArchivo(file) {
+                this.editandoArchivo = true;
+                this.formArchivo = { ...file };
+                this.modalArchivoInstancia.show();
+            },
+            async guardarArchivo() {
+                try {
+                    let response;
+                    if (this.editandoArchivo) {
+                        response = await axios.put(this.basePath + 'files.php', this.formArchivo);
+                    } else {
+                        response = await axios.post(this.basePath + 'files.php', this.formArchivo);
+                    }
+
+                    if (response.data.success) {
+                        Swal.fire('¡Éxito!', response.data.message, 'success');
+                        this.modalArchivoInstancia.hide();
+                        this.cargarArchivos();
+                    } else {
+                        Swal.fire('Atención', response.data.message, 'warning');
+                    }
+                } catch (error) {
+                    console.error('Error al guardar archivo:', error);
+                    Swal.fire('Error', 'No se pudo guardar el archivo.', 'error');
+                }
+            },
+            async eliminarArchivo(id) {
+                const confirmacion = await Swal.fire({
+                    title: '¿Eliminar archivo?',
+                    text: "Se eliminará el registro de la base de datos.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (confirmacion.isConfirmed) {
+                    try {
+                        const response = await axios.delete(`${this.basePath}files.php?id=${id}`);
+                        if (response.data.success) {
+                            Swal.fire('¡Eliminado!', response.data.message, 'success');
+                            this.cargarArchivos();
+                        } else {
+                            Swal.fire('Error', response.data.message, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error al eliminar archivo:', error);
+                        Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
+                    }
+                }
+            },
+
+            // CERRAR SESIÓN
             logout() {
                 localStorage.removeItem('usuario');
                 this.$router.push('/');
@@ -514,11 +759,11 @@
 
 <style scoped>
     .nav-link.active {
-        border-bottom: 3px solid #0d6efd !important; /* Una pequeña línea azul abajo del botón activo */
+        border-bottom: 3px solid #0d6efd !important;
         border-radius: 0;
     }
     .nav-link:focus {
-        box-shadow: none; /* Elimina el molesto recuadro azul de enfoque de Bootstrap en los botones */
+        box-shadow: none;
     }
     .admin-panel {
         min-height: 100vh;
@@ -526,20 +771,6 @@
     }
     .main-navbar {
         border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .tracking-wider {
-        letter-spacing: 0.05em;
-    }
-    .btn-logout {
-        background-color: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-        border: 1px solid rgba(220, 53, 69, 0.2);
-        border-radius: 6px;
-        transition: all 0.2s ease;
-    }
-    .btn-logout:hover {
-        background-color: #dc3545;
-        color: #fff;
     }
     .btn-add-project {
         background-color: #212529;
@@ -615,8 +846,6 @@
         background-color: #dc3545;
         color: #fff;
     }
-
-    /* Estilos de campos del modal */
     .form-control-custom {
         border-radius: 8px;
         border: 1px solid #ced4da;
@@ -625,5 +854,19 @@
     .form-control-custom:focus {
         border-color: #212529;
         box-shadow: 0 0 0 0.25rem rgba(33, 37, 41, 0.1);
+    }
+
+    .btn-action-view {
+        color: #6c757d;
+        background-color: rgba(108, 117, 125, 0.05);
+        border: 1px solid rgba(108, 117, 125, 0.2);
+        border-radius: 6px;
+        padding: 5px 14px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-view:hover {
+        background-color: #6c757d;
+        color: #fff;
     }
 </style>

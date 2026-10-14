@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -18,39 +18,81 @@ $fileModel = new File($db);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// CASO GET: Para leer datos (Desde el portafolio público o el admin)
 if ($method === 'GET') {
-    $tipo = $_GET['tipo'] ?? '';
-    
-    if ($tipo === 'cv') {
-        // El CV es único, usamos readByTipo
-        $resultado = $fileModel->readByTipo('cv');
-    } else {
-        // Las certificaciones son muchas, usamos readAllByTipo
-        $resultado = $fileModel->readAllByTipo('certificacion');
-    }
+    $categoria = $_GET['categoria'] ?? null;
+    $single = $_GET['single'] ?? false;
 
-    echo json_encode(["success" => true, "data" => $resultado]);
+    if ($single && $categoria) {
+        $data = $fileModel->readOneByCategoria($categoria);
+        echo json_encode(["success" => true, "data" => $data]);
+    } else {
+        $data = $fileModel->readAll($categoria);
+        echo json_encode(["success" => true, "data" => $data]);
+    }
     exit;
 }
 
-// CASO POST: Para actualizar la URL (Desde tu panel de administración)
+$data = json_decode(file_get_contents("php://input"), true);
+
 if ($method === 'POST') {
-    $data = json_decode(file_get_contents("php://input"), true);
-    
-    if (!isset($data['id_file']) || !isset($data['url'])) {
-        echo json_encode(["success" => false, "message" => "Datos incompletos."]);
+    if (empty($data['nombre']) || empty($data['categoria']) || empty($data['url'])) {
+        echo json_encode(["success" => false, "message" => "Nombre, Categoría y URL son requeridos."]);
+        exit;
+    }
+
+    $fileModel->nombre = $data['nombre'];
+    $fileModel->categoria = $data['categoria'];
+    $fileModel->formato = $data['formato'] ?? 'pdf';
+    $fileModel->emisor = $data['emisor'] ?? '';
+    $fileModel->fecha_emision = $data['fecha_emision'] ?? null;
+    $fileModel->url = $data['url'];
+    $fileModel->url_miniatura = $data['url_miniatura'] ?? '';
+
+    if ($fileModel->create()) {
+        echo json_encode(["success" => true, "message" => "Archivo guardado exitosamente."]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Error al guardar el archivo."]);
+    }
+    exit;
+}
+
+if ($method === 'PUT') {
+    if (empty($data['id_file']) || empty($data['nombre'])) {
+        echo json_encode(["success" => false, "message" => "ID y Nombre son requeridos para actualizar."]);
         exit;
     }
 
     $fileModel->id_file = $data['id_file'];
+    $fileModel->nombre = $data['nombre'];
+    $fileModel->categoria = $data['categoria'];
+    $fileModel->formato = $data['formato'] ?? 'pdf';
+    $fileModel->emisor = $data['emisor'] ?? '';
+    $fileModel->fecha_emision = $data['fecha_emision'] ?? null;
     $fileModel->url = $data['url'];
-    $fileModel->nombre = $data['nombre'] ?? 'Archivo';
+    $fileModel->url_miniatura = $data['url_miniatura'] ?? '';
 
-    if ($fileModel->updateUrl()) {
-        echo json_encode(["success" => true, "message" => "Archivo actualizado con éxito."]);
+    if ($fileModel->update()) {
+        echo json_encode(["success" => true, "message" => "Archivo actualizado exitosamente."]);
     } else {
-        echo json_encode(["success" => false, "message" => "No se pudo actualizar."]);
+        echo json_encode(["success" => false, "message" => "Error al actualizar el archivo."]);
+    }
+    exit;
+}
+
+if ($method === 'DELETE') {
+    $id = $_GET['id'] ?? null;
+
+    if (!$id) {
+        echo json_encode(["success" => false, "message" => "ID no proporcionado."]);
+        exit;
+    }
+
+    $fileModel->id_file = $id;
+
+    if ($fileModel->delete()) {
+        echo json_encode(["success" => true, "message" => "Archivo eliminado correctamente."]);
+    } else {
+        echo json_encode(["success" => false, "message" => "No se pudo eliminar el archivo."]);
     }
     exit;
 }
