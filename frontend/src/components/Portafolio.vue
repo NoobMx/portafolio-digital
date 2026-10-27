@@ -28,10 +28,9 @@
                     </div>
                     <div class="col-lg-6 text-center">
                         <img 
-                            src="https://ui-avatars.com/api/?name=Dev+FullStack&size=400&background=0d6efd&color=fff&rounded=true"
+                            :src="urlFotoPerfil"
                             alt="Mi Foto de Perfil"
-                            class="img-fluid shadow-lg rounded-circle"
-                            style="max-width: 350px; border: 5px solid white;"
+                            class="foto-perfil shadow-lg rounded-circle"
                         >
                     </div>
                 </div>
@@ -125,20 +124,28 @@
                     :key="proyecto.id_proyecto" 
                     class="col-12 col-md-6 col-lg-4 mb-4"
                 >
-                    <div class="card h-100 shadow-sm">
-                        <img :src="proyecto.url_imagen" class="card-img-top" alt="Miniatura">
+                    <div class="card h-100 shadow-sm border-0 card-proyecto" @click="abrirDetalle(proyecto)">
+                        <div class="proyecto-img-wrap position-relative">
+                            <img :src="urlImagenDirecta(proyecto.url_imagen)" class="w-100 h-100 object-fit-cover" :alt="proyecto.titulo">
+                            <span v-if="imagenesProyecto(proyecto).length > 1" class="badge bg-dark bg-opacity-75 position-absolute bottom-0 end-0 m-2">
+                                <i class="bi bi-images me-1"></i>{{ imagenesProyecto(proyecto).length }}
+                            </span>
+                        </div>
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ proyecto.titulo }}</h5>
-                            <p class="card-text text-muted small"><strong>Tech:</strong> {{ proyecto.tecnologias }}</p>
-                            <p class="card-text flex-grow-1">{{ proyecto.descripcion }}</p>
-                            <a 
-                                v-if="proyecto.url_github" 
-                                :href="proyecto.url_github" 
-                                target="_blank" 
-                                class="btn btn-primary btn-sm mt-auto"
-                            >
-                                Ver Código
-                            </a>
+                            <h5 class="card-title fw-bold clamp-2">{{ proyecto.titulo }}</h5>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                <span v-for="tec in tecnologiasLista(proyecto.tecnologias).slice(0, 3)" :key="tec" class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">{{ tec }}</span>
+                                <span v-if="tecnologiasLista(proyecto.tecnologias).length > 3" class="badge bg-light text-muted border">+{{ tecnologiasLista(proyecto.tecnologias).length - 3 }}</span>
+                            </div>
+                            <p class="card-text text-secondary small clamp-3 mb-3">{{ proyecto.descripcion }}</p>
+                            <div class="mt-auto d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1" @click.stop="abrirDetalle(proyecto)">
+                                    <i class="bi bi-eye me-1"></i> Ver más
+                                </button>
+                                <a v-if="proyecto.url_github" :href="proyecto.url_github" target="_blank" class="btn btn-dark btn-sm" @click.stop title="Ver código">
+                                    <i class="bi bi-github"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,6 +207,48 @@
             </div>
         </div>
 
+        <!-- MODAL DETALLE DE PROYECTO -->
+        <div v-if="proyectoSeleccionado" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);" @click.self="cerrarDetalle">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold">{{ proyectoSeleccionado.titulo }}</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="cerrarDetalle"></button>
+                    </div>
+                    <!-- CARRUSEL DE IMÁGENES -->
+                    <div v-if="imagenesDetalle.length" class="carrusel" @keydown.left="cambiarImagen(-1)" @keydown.right="cambiarImagen(1)" tabindex="0">
+                        <div class="carrusel-pista" :style="{ transform: `translateX(-${indiceImagen * 100}%)` }">
+                            <div v-for="(img, i) in imagenesDetalle" :key="img + i" class="carrusel-slide">
+                                <img :src="urlImagenDirecta(img)" :alt="proyectoSeleccionado.titulo + ' - imagen ' + (i + 1)">
+                            </div>
+                        </div>
+                        <template v-if="imagenesDetalle.length > 1">
+                            <button type="button" class="carrusel-btn izq" @click="cambiarImagen(-1)" aria-label="Anterior"><i class="bi bi-chevron-left"></i></button>
+                            <button type="button" class="carrusel-btn der" @click="cambiarImagen(1)" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></button>
+                            <span class="carrusel-contador">{{ indiceImagen + 1 }} / {{ imagenesDetalle.length }}</span>
+                        </template>
+                    </div>
+                    <div v-if="imagenesDetalle.length > 1" class="carrusel-miniaturas">
+                        <img v-for="(img, i) in imagenesDetalle" :key="'m' + i" :src="urlImagenDirecta(img)" :class="{ activa: i === indiceImagen }" @click="indiceImagen = i" :alt="'Miniatura ' + (i + 1)">
+                    </div>
+                    <div class="modal-body p-4">
+                        <h6 class="fw-bold text-secondary small text-uppercase mb-2">Tecnologías</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span v-for="tec in tecnologiasLista(proyectoSeleccionado.tecnologias)" :key="tec" class="badge bg-primary px-3 py-2">{{ tec }}</span>
+                        </div>
+                        <h6 class="fw-bold text-secondary small text-uppercase mb-2">Descripción</h6>
+                        <p class="mb-0" style="white-space: pre-line;">{{ proyectoSeleccionado.descripcion }}</p>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light border" @click="cerrarDetalle">Cerrar</button>
+                        <a v-if="proyectoSeleccionado.url_github" :href="proyectoSeleccionado.url_github" target="_blank" class="btn btn-dark">
+                            <i class="bi bi-github me-1"></i> Ver Código
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -218,7 +267,15 @@ export default {
             urlCV: '#',
             nombreCompleto: 'Cargando...',
             listaExperiencia: [],
-            listaCertificaciones: [] // Nueva lista para el catálogo
+            listaCertificaciones: [], // Nueva lista para el catálogo
+            proyectoSeleccionado: null, // Proyecto abierto en el modal de detalle
+            indiceImagen: 0,            // Imagen visible en el carrusel
+            urlFotoPerfil: 'https://ui-avatars.com/api/?name=Roberto+Mejia&size=400&background=0d6efd&color=fff&rounded=true' // Respaldo si no hay foto en la BD
+        }
+    },
+    computed: {
+        imagenesDetalle() {
+            return this.proyectoSeleccionado ? this.imagenesProyecto(this.proyectoSeleccionado) : [];
         }
     },
     mounted() {
@@ -226,6 +283,7 @@ export default {
         this.cargarCV();
         this.cargarExperiencia();
         this.cargarCertificaciones(); // Nueva llamada
+        this.cargarFotoPerfil();
     },
     methods: {
         async cargarProyectos() {
@@ -272,6 +330,49 @@ export default {
             } catch (error) {
                 console.error('Error al cargar certificaciones:', error);
             }
+        },
+
+        async cargarFotoPerfil() {
+            try {
+                const response = await axios.get(this.basePath + 'files.php?categoria=foto_perfil&single=true');
+                if (response.data.success && response.data.data) {
+                    this.urlFotoPerfil = this.urlImagenDirecta(response.data.data.url);
+                }
+            } catch (error) {
+                console.error('Error al cargar la foto de perfil:', error);
+            }
+        },
+
+        // Convierte un link de Google Drive (".../file/d/ID/view") en un link que sí se puede usar en <img>
+        urlImagenDirecta(url) {
+            const match = url && url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+            return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800` : url;
+        },
+
+        tecnologiasLista(texto) {
+            return (texto || '').split(',').map(t => t.trim().replace(/\.$/, '')).filter(Boolean);
+        },
+
+        // Portada + galería, sin repetidas ni vacías
+        imagenesProyecto(proyecto) {
+            const todas = [proyecto.url_imagen, ...(proyecto.imagenes || [])].filter(Boolean);
+            return [...new Set(todas)];
+        },
+
+        cambiarImagen(dir) {
+            const total = this.imagenesDetalle.length;
+            this.indiceImagen = (this.indiceImagen + dir + total) % total;
+        },
+
+        abrirDetalle(proyecto) {
+            this.proyectoSeleccionado = proyecto;
+            this.indiceImagen = 0;
+            document.body.style.overflow = 'hidden';
+        },
+
+        cerrarDetalle() {
+            this.proyectoSeleccionado = null;
+            document.body.style.overflow = '';
         },
 
         formatearFecha(fechaSql) {
@@ -340,5 +441,118 @@ export default {
   }
   .object-fit-cover {
       object-fit: cover;
+  }
+
+  /* Foto de perfil: siempre circular y del mismo tamaño, sin importar la imagen */
+  .foto-perfil {
+      width: 100%;
+      max-width: 350px;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border: 5px solid white;
+  }
+
+  /* Tarjetas de proyectos con tamaño uniforme */
+  .card-proyecto {
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .card-proyecto:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+  }
+  .proyecto-img-wrap {
+      height: 200px;
+      background-color: #f8f9fa;
+  }
+  .clamp-2,
+  .clamp-3 {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+  }
+  .clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
+  .clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
+
+  /* Carrusel del modal de detalle */
+  .carrusel {
+      position: relative;
+      overflow: hidden;
+      background: #111;
+      outline: none;
+      flex-shrink: 0;
+  }
+  .carrusel-pista {
+      display: flex;
+      transition: transform 0.4s ease;
+  }
+  .carrusel-slide {
+      flex: 0 0 100%;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+  .carrusel-slide img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain; /* Se ve la imagen completa, sin recortes */
+  }
+  .carrusel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.85);
+      color: #212529;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: background 0.2s ease;
+  }
+  .carrusel-btn:hover { background: #fff; }
+  .carrusel-btn.izq { left: 12px; }
+  .carrusel-btn.der { right: 12px; }
+  .carrusel-contador {
+      position: absolute;
+      bottom: 10px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 2px 10px;
+      border-radius: 12px;
+  }
+  .carrusel-miniaturas {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      background: #f8f9fa;
+      flex-shrink: 0;
+  }
+  .carrusel-miniaturas img {
+      width: 72px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0.55;
+      border: 2px solid transparent;
+      transition: opacity 0.2s ease;
+  }
+  .carrusel-miniaturas img:hover { opacity: 0.85; }
+  .carrusel-miniaturas img.activa {
+      opacity: 1;
+      border-color: #0d6efd;
+  }
+  @media (max-width: 576px) {
+      .carrusel-slide { height: 240px; }
   }
 </style>

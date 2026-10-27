@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/conexion.php';
 
 $db = new DataBase();
 #$conexion = $db->connect();
-$conexion = $database->getConnection();
+$conexion = $db->getConnection();
 
 if ($conexion) {
     echo json_encode([

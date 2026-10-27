@@ -124,11 +124,14 @@
             
             <!-- PESTAÑA 2: EXPERIENCIA -->
             <div v-if="vistaActiva === 'experiencia'" class="animate__animated animate__fadeIn">
-                <div class="mt-5">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class="fw-bold"><i class="bi bi-briefcase"></i> Gestionar Experiencia y Educación</h3>
-                        <button class="btn btn-primary" @click="abrirModalExperiencia()">
-                            <i class="bi bi-plus-circle"></i> Nuevo Registro
+                <div class="container mt-5 pt-2">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="h3 fw-bold text-dark mb-1">Experiencia y Educación</h2>
+                            <p class="text-muted small mb-0">Administra tu trayectoria laboral y académica que aparece en la línea del tiempo.</p>
+                        </div>
+                        <button class="btn btn-add-project shadow-sm fw-medium px-4" @click="abrirModalExperiencia()">
+                            <i class="bi bi-plus-lg me-2"></i>Nuevo Registro
                         </button>
                     </div>
                     
@@ -179,14 +182,14 @@
 
             <!-- PESTAÑA 3: ARCHIVOS Y CERTIFICACIONES -->
             <div v-if="vistaActiva === 'archivos'" class="animate__animated animate__fadeIn">
-                <div class="mt-5">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="container mt-5 pt-2">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
                         <div>
-                            <h3 class="fw-bold mb-1"><i class="bi bi-file-earmark-pdf"></i> Archivos y Certificaciones</h3>
-                            <p class="text-muted small mb-0">Gestiona tu CV y tus diplomas para el catálogo digital.</p>
+                            <h2 class="h3 fw-bold text-dark mb-1">Archivos y Certificaciones</h2>
+                            <p class="text-muted small mb-0">Gestiona tu CV, foto de perfil y diplomas para el catálogo digital.</p>
                         </div>
-                        <button class="btn btn-success" @click="abrirModalArchivo()">
-                            <i class="bi bi-plus-circle me-1"></i> Agregar Archivo
+                        <button class="btn btn-add-project shadow-sm fw-medium px-4" @click="abrirModalArchivo()">
+                            <i class="bi bi-plus-lg me-2"></i>Agregar Archivo
                         </button>
                     </div>
 
@@ -248,11 +251,16 @@
 
         <!-- PROYECTOS MODAL -->
         <div class="modal fade" :class="{ 'show d-block': modalAbierto }" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog" :class="modalMaximizado ? 'modal-fullscreen' : 'modal-lg modal-dialog-centered modal-dialog-scrollable'">
                 <div class="modal-content border-0 shadow-lg">
                     <div class="modal-header bg-dark text-white border-0 py-3">
                         <h5 class="modal-title fw-bold">{{ editando ? 'Editar Proyecto' : 'Nuevo Proyecto' }}</h5>
-                        <button type="button" class="btn-close btn-close-white" @click="cerrarModal"></button>
+                        <div class="ms-auto d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-light border-0" @click="modalMaximizado = !modalMaximizado" :title="modalMaximizado ? 'Restaurar' : 'Maximizar'">
+                                <i class="bi" :class="modalMaximizado ? 'bi-fullscreen-exit' : 'bi-arrows-fullscreen'"></i>
+                            </button>
+                            <button type="button" class="btn-close btn-close-white" @click="cerrarModal"></button>
+                        </div>
                     </div>
                     <div class="modal-body p-4">
                         <form @submit.prevent="guardarProyecto">
@@ -265,8 +273,32 @@
                                 <input v-model="form.tecnologias" type="text" class="form-control form-control-custom" required placeholder="Ej: Vue 3, PHP 8, PostgreSQL">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label small fw-bold text-secondary">URL de la Imagen (Opcional)</label>
+                                <label class="form-label small fw-bold text-secondary">URL de la Imagen de Portada (Opcional)</label>
                                 <input v-model="form.url_imagen" type="url" class="form-control form-control-custom" placeholder="https://ejemplo.com/foto.jpg">
+                                <div class="form-text">Es la que se ve en la tarjeta y la primera del carrusel.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-secondary">Galería del Carrusel (Opcional)</label>
+                                <div class="input-group">
+                                    <input v-model="nuevaImagen" type="url" class="form-control form-control-custom" placeholder="https://ejemplo.com/captura.jpg" @keydown.enter.prevent="agregarImagen">
+                                    <button type="button" class="btn btn-dark px-3" @click="agregarImagen" :disabled="!nuevaImagen.trim()">
+                                        <i class="bi bi-plus-lg me-1"></i>Agregar
+                                    </button>
+                                </div>
+                                <div class="form-text">Pega la URL y presiona Enter o "Agregar". Puedes cambiar el orden con las flechas.</div>
+
+                                <div v-if="form.imagenes.length" class="galeria-admin mt-3">
+                                    <div v-for="(img, i) in form.imagenes" :key="img + i" class="galeria-item shadow-sm">
+                                        <img :src="urlImagenDirecta(img)" :alt="'Imagen ' + (i + 1)">
+                                        <span class="galeria-num">{{ i + 1 }}</span>
+                                        <div class="galeria-acciones">
+                                            <button type="button" class="btn btn-sm btn-light" @click="moverImagen(i, -1)" :disabled="i === 0" title="Mover a la izquierda"><i class="bi bi-chevron-left"></i></button>
+                                            <button type="button" class="btn btn-sm btn-light" @click="moverImagen(i, 1)" :disabled="i === form.imagenes.length - 1" title="Mover a la derecha"><i class="bi bi-chevron-right"></i></button>
+                                            <button type="button" class="btn btn-sm btn-danger" @click="quitarImagen(i)" title="Quitar"><i class="bi bi-trash"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-muted small mt-2"><i class="bi bi-images me-1"></i>Aún no hay imágenes en la galería.</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-secondary">Enlace de GitHub (Opcional)</label>
@@ -274,7 +306,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-secondary">Descripción</label>
-                                <textarea v-model="form.descripcion" class="form-control form-control-custom" rows="3" placeholder="Describe brevemente el alcance del proyecto..."></textarea>
+                                <textarea v-model="form.descripcion" class="form-control form-control-custom" :rows="modalMaximizado ? 14 : 6" placeholder="Describe brevemente el alcance del proyecto..."></textarea>
                             </div>
                             <div class="d-flex justify-content-end gap-2 mt-4">
                                 <button type="button" class="btn btn-light px-4 border" @click="cerrarModal">Cancelar</button>
@@ -371,6 +403,7 @@
                                         <option value="certificacion">Certificación</option>
                                         <option value="cv">Curriculum Vitae (CV)</option>
                                         <option value="reconocimiento">Reconocimiento</option>
+                                        <option value="foto_perfil">Foto de Perfil</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -445,14 +478,17 @@
                     : 'https://portafolio-digital-production.up.railway.app/',
                 // Proyectos
                 modalAbierto: false,
+                modalMaximizado: false,
                 editando: false,
+                nuevaImagen: '',
                 form: {
                     id_proyecto: null,
                     titulo: '',
                     tecnologias: '',
                     url_imagen: '',
                     url_github: '',
-                    descripcion: ''
+                    descripcion: '',
+                    imagenes: []
                 },
                 
                 // Experiencia
@@ -516,18 +552,44 @@
             },
             abrirModalCrear() {
                 this.editando = false;
-                this.form = { id_proyecto: null, titulo: '', tecnologias: '', url_imagen: '', url_github: '', descripcion: '' };
+                this.form = { id_proyecto: null, titulo: '', tecnologias: '', url_imagen: '', url_github: '', descripcion: '', imagenes: [] };
+                this.nuevaImagen = '';
                 this.modalAbierto = true;
             },
             abrirModalEditar(proyecto) {
                 this.editando = true;
-                this.form = { ...proyecto };
+                this.form = { ...proyecto, imagenes: [...(proyecto.imagenes || [])] };
+                this.nuevaImagen = '';
                 this.modalAbierto = true;
+            },
+            // GALERÍA DEL CARRUSEL
+            agregarImagen() {
+                const url = this.nuevaImagen.trim();
+                if (!url) return;
+                if (!this.form.imagenes.includes(url)) this.form.imagenes.push(url);
+                this.nuevaImagen = '';
+            },
+            quitarImagen(i) {
+                this.form.imagenes.splice(i, 1);
+            },
+            moverImagen(i, dir) {
+                const j = i + dir;
+                if (j < 0 || j >= this.form.imagenes.length) return;
+                const lista = this.form.imagenes;
+                [lista[i], lista[j]] = [lista[j], lista[i]];
+            },
+            // Convierte un link de Google Drive (".../file/d/ID/view") en uno que sí se puede usar en <img>
+            urlImagenDirecta(url) {
+                const match = url && url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+                return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800` : url;
             },
             cerrarModal() {
                 this.modalAbierto = false;
+                this.modalMaximizado = false;
             },
             async guardarProyecto() {
+                // Si dejaste una URL escrita sin presionar "Agregar", también se guarda
+                if (this.nuevaImagen.trim()) this.agregarImagen();
                 try {
                     let response;
                     if (this.editando) {
@@ -781,6 +843,44 @@
         border-radius: 8px;
         padding: 10px 20px;
         transition: all 0.2s ease;
+    }
+    .galeria-admin {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+    .galeria-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f1f3f5;
+        aspect-ratio: 16 / 10;
+    }
+    .galeria-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .galeria-num {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        background: rgba(33, 37, 41, 0.85);
+        color: #fff;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        padding: 0 6px;
+    }
+    .galeria-acciones {
+        position: absolute;
+        bottom: 6px;
+        right: 6px;
+        display: flex;
+        gap: 4px;
+    }
+    .galeria-acciones .btn {
+        padding: 2px 6px;
+        line-height: 1;
     }
     .btn-add-project:hover {
         background-color: #343a40;

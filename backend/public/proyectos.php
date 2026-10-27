@@ -19,6 +19,13 @@ $proyecto = new Proyecto($db);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Limpia la galería: solo URLs de texto, sin vacíos ni repetidas
+function limpiarImagenes($lista) {
+    if (!is_array($lista)) return [];
+    $urls = array_map(fn($u) => is_string($u) ? trim($u) : '', $lista);
+    return array_values(array_unique(array_filter($urls)));
+}
+
 if ($method === 'GET') {
     echo json_encode(["success" => true, "data" => $proyecto->readAll()]);
     exit;
@@ -37,6 +44,7 @@ if ($method === 'POST') {
     $proyecto->tecnologias = $data['tecnologias'];
     $proyecto->url_imagen = !empty($data['url_imagen']) ? $data['url_imagen'] : 'https://via.placeholder.com/300x200';
     $proyecto->url_github = $data['url_github'] ?? '';
+    $proyecto->imagenes = limpiarImagenes($data['imagenes'] ?? []);
 
     if ($proyecto->create()) {
         echo json_encode(["success" => true, "message" => "Proyecto creado exitosamente."]);
@@ -58,6 +66,7 @@ if ($method === 'PUT') {
     $proyecto->tecnologias = $data['tecnologias'];
     $proyecto->url_imagen = !empty($data['url_imagen']) ? $data['url_imagen'] : 'https://via.placeholder.com/300x200';
     $proyecto->url_github = $data['url_github'] ?? '';
+    $proyecto->imagenes = limpiarImagenes($data['imagenes'] ?? []);
 
     if ($proyecto->update()) {
         echo json_encode(["success" => true, "message" => "Proyecto actualizado exitosamente."]);
